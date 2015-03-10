@@ -23,7 +23,7 @@ pub enum Suit {
     Spades,
 }
 
-//type Card = (Value, Suit);
+type Card = (Value, Suit);
 
 //type Deck = Vec<Card>;
 
@@ -58,9 +58,15 @@ impl ToString for Suit {
     }
 }
 
-fn main() {
-    let value = Value::Two;
-    let suit = Suit::Hearts;
+fn print_card(card: Card) {
+    let (value, suit) = card;
 
-    println!("{}{}", value.to_string(), suit.to_string());
+    println!("{: >#02}{}", value.to_string(), suit.to_string());
+}
+
+fn main() {
+    let card: Card = (Value::Ten, Suit::Clubs);
+
+    //println!("{}{}", value.to_string(), suit.to_string());
+    print_card(card);
 }
