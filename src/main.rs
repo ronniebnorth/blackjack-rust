@@ -1,3 +1,8 @@
+extern crate rand;
+
+use rand::{thread_rng, Rng};
+//use std::rand::{thread_rng, Rng};
+
 #[allow(dead_code)]
 pub enum Value {
     Ace,
@@ -124,8 +129,13 @@ fn create_deck() -> Deck {
     ]
 }
 
+fn shuffle_deck(deck: &mut Deck) {
+    thread_rng().shuffle(deck.as_mut_slice());
+}
+
 fn main() {
-    let deck = create_deck();
+    let mut deck = create_deck();
+    shuffle_deck(&mut deck);
 
     for card in &deck {
         print_card(card)
