@@ -1,3 +1,4 @@
+#![feature(collections)]
 #![feature(convert)]
 extern crate rand;
 
@@ -162,10 +163,10 @@ fn play_hand(deck: &mut Deck) {
     // Deal to dealer and player, alternately
     let mut dealer_hand = Hand::new();
     let mut player_hand = Hand::new();
-    deal_card(&mut dealer_hand, &mut deck);
-    deal_card(&mut player_hand, &mut deck);
-    deal_card(&mut dealer_hand, &mut deck);
-    deal_card(&mut player_hand, &mut deck);
+    deal_card(&mut dealer_hand, deck);
+    deal_card(&mut player_hand, deck);
+    deal_card(&mut dealer_hand, deck);
+    deal_card(&mut player_hand, deck);
 
     print_hands(&dealer_hand, &player_hand);
 
@@ -186,7 +187,7 @@ fn main() {
     println!("Welcome to Blackjack!");
 
     loop {
-        println!("Would you like to play a hand (y/n)?");
+        println!("\nWould you like to play a hand (y/n)?");
 
         let mut input = String::new();
 
