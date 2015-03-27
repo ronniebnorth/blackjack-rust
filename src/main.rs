@@ -34,6 +34,7 @@ pub enum Suit {
 type Card = (Value, Suit);
 
 type Deck = Vec<Card>;
+type Hand = Vec<Card>;
 
 impl ToString for Value {
     fn to_string(&self) -> String {
@@ -69,7 +70,7 @@ impl ToString for Suit {
 fn print_card(card: &Card) {
     let (ref value, ref suit) = *card;
 
-    println!("{: >#02}{}", value.to_string(), suit.to_string());
+    print!("{: >#02}{}", value.to_string(), suit.to_string());
 }
 
 fn create_deck() -> Deck {
@@ -136,8 +137,46 @@ fn shuffle_deck(deck: &mut Deck) {
     thread_rng().shuffle(deck.as_mut_slice());
 }
 
+fn print_hands(dealer: &Hand, player: &Hand) {
+    print!("Dealer:\t");
+    for card in dealer {
+        print_card(card);
+        print!(" ");
+    }
+    
+    print!("\nPlayer:\t");
+    for card in player {
+        print_card(card);
+        print!(" ");
+    }
+}
+
+fn deal_card(hand: &mut Hand, deck: &mut Deck) {
+    hand.push(deck.pop().expect("How do you run out of cards in Blackjack?!"));
+}
+
 fn play_hand(deck: &mut Deck) {
-    println!("You play a hand!");
+    // Each hand begins with a shuffle
+    shuffle_deck(deck);
+
+    // Deal to dealer and player, alternately
+    let mut dealer_hand = Hand::new();
+    let mut player_hand = Hand::new();
+    deal_card(&mut dealer_hand, &mut deck);
+    deal_card(&mut player_hand, &mut deck);
+    deal_card(&mut dealer_hand, &mut deck);
+    deal_card(&mut player_hand, &mut deck);
+
+    print_hands(&dealer_hand, &player_hand);
+
+    //Return cards to deck
+    for card in dealer_hand.drain() {
+        deck.push(card);
+    }
+
+    for card in player_hand.drain() {
+        deck.push(card);
+    }
 }
 
 fn main() {
