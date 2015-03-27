@@ -1,7 +1,10 @@
+#![feature(convert)]
 extern crate rand;
 
 use rand::{thread_rng, Rng};
-//use std::rand::{thread_rng, Rng};
+
+use std::io;
+use std::option::Option;
 
 #[allow(dead_code)]
 pub enum Value {
@@ -133,11 +136,30 @@ fn shuffle_deck(deck: &mut Deck) {
     thread_rng().shuffle(deck.as_mut_slice());
 }
 
+fn play_hand(deck: &mut Deck) {
+    println!("You play a hand!");
+}
+
 fn main() {
     let mut deck = create_deck();
     shuffle_deck(&mut deck);
 
-    for card in &deck {
-        print_card(card)
+    println!("Welcome to Blackjack!");
+
+    loop {
+        println!("Would you like to play a hand (y/n)?");
+
+        let mut input = String::new();
+
+        match io::stdin().read_line(&mut input).ok() {
+            Option::Some(_) => match input.trim().as_ref() {
+                "y" => play_hand(&mut deck),
+                "yes" => play_hand(&mut deck),
+                "n" => break,
+                "no" => break,
+                _ => println!("Please enter 'yes' or 'no'."),
+            },
+            Option::None => break,
+        }
     }
 }
