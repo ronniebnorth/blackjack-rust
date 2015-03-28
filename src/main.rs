@@ -171,14 +171,12 @@ fn print_hands(dealer: &Hand, player: &Hand) {
         print_card(card);
         print!(" ");
     }
-    print!("\t{}", score_hand(dealer));
     
     print!("\nPlayer:\t");
     for card in player {
         print_card(card);
         print!(" ");
     }
-    print!("\t{}", score_hand(player));
 }
 
 fn deal_card(hand: &mut Hand, deck: &mut Deck) {
@@ -194,10 +192,55 @@ fn play_hand(deck: &mut Deck) {
     let mut player_hand = Hand::new();
     deal_card(&mut dealer_hand, deck);
     deal_card(&mut player_hand, deck);
-    deal_card(&mut dealer_hand, deck);
     deal_card(&mut player_hand, deck);
 
-    print_hands(&dealer_hand, &player_hand);
+    // Let player go first
+    loop {
+        print_hands(&dealer_hand, &player_hand);
+
+        println!("\n[h]it or [s]tand?");
+
+        let mut input = String::new();
+        match io::stdin().read_line(&mut input).ok() {
+            Option::Some(_) => match input.trim().as_ref() {
+                "s" | "S" => break,
+                "h" | "H" => {
+                    deal_card(&mut player_hand, deck);
+                    if score_hand(&player_hand) > 21 {
+                        println!("\nBUST!\n");
+                        break;
+                    }
+                },
+                _ => println!("Invalid Value!"),
+            },
+            Option::None => println!("Invalid Value!"),
+        }
+    }
+
+    //Dealer Logic
+    while score_hand(&dealer_hand) < 17 {
+        println!("\nDealer hits!");
+        deal_card(&mut dealer_hand, deck);
+        print_hands(&dealer_hand, &player_hand);
+    }
+    println!("\nDealer stands!");
+
+    //Final Scoring
+    let dealer_score = score_hand(&dealer_hand);
+    let player_score = score_hand(&player_hand);
+    if dealer_score == 21 && dealer_hand.len() == 2 {
+        println!("\nDEALER WINS with blackjack!");
+    } else if player_score == 21 && player_hand.len() == 2 {
+        println!("\nYOU WIN with blackjack!");
+    } else if player_score > 21 {
+        println!("\nDEALER WINS, you bust!");
+    } else if dealer_score > 21 {
+        println!("\nYOU WIN, dealer busts!");
+    } else if player_score > dealer_score {
+        println!("\nYOU WIN");
+    } else {
+        println!("\nDEALER WINS");
+    }
 
     //Return cards to deck
     for card in dealer_hand.drain() {
