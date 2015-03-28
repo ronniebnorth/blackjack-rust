@@ -6,6 +6,7 @@ use rand::{thread_rng, Rng};
 
 use std::io;
 use std::option::Option;
+use std::str::FromStr;
 
 #[allow(dead_code)]
 pub enum Value {
@@ -138,18 +139,46 @@ fn shuffle_deck(deck: &mut Deck) {
     thread_rng().shuffle(deck.as_mut_slice());
 }
 
+fn score_hand(hand: &Hand) -> i32 {
+    // Number cards are face value, faces are 10, Ace is 11 unless that makes the score >21,
+    // then Aces are 1
+    let mut score: i32 = 0;
+    let mut has_ace: bool = false;
+    for card in hand {
+        let (ref value, _) = *card;
+        match *value {
+            Value::Ace => {
+                score += 11;
+                has_ace = true;
+            },
+            Value::Jack => score += 10,
+            Value::Queen => score += 10,
+            Value::King => score += 10,
+            _ => score += i32::from_str(value.to_string().as_ref()).unwrap_or(0),
+        }
+    }
+
+    if has_ace && score > 21 {
+        score +=10;
+    }
+
+    score
+}
+
 fn print_hands(dealer: &Hand, player: &Hand) {
     print!("Dealer:\t");
     for card in dealer {
         print_card(card);
         print!(" ");
     }
+    print!("\t{}", score_hand(dealer));
     
     print!("\nPlayer:\t");
     for card in player {
         print_card(card);
         print!(" ");
     }
+    print!("\t{}", score_hand(player));
 }
 
 fn deal_card(hand: &mut Hand, deck: &mut Deck) {
@@ -193,10 +222,8 @@ fn main() {
 
         match io::stdin().read_line(&mut input).ok() {
             Option::Some(_) => match input.trim().as_ref() {
-                "y" => play_hand(&mut deck),
-                "yes" => play_hand(&mut deck),
-                "n" => break,
-                "no" => break,
+                "y" | "yes" => play_hand(&mut deck),
+                "n" | "no" => break,
                 _ => println!("Please enter 'yes' or 'no'."),
             },
             Option::None => break,
