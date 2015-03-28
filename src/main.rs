@@ -159,7 +159,7 @@ fn score_hand(hand: &Hand) -> i32 {
     }
 
     if has_ace && score > 21 {
-        score +=10;
+        score -=10;
     }
 
     score
