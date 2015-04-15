@@ -1,5 +1,5 @@
-#![feature(collections)]
-#![feature(convert)]
+//#![feature(collections)]
+//#![feature(convert)]
 extern crate rand;
 
 use rand::{thread_rng, Rng};
@@ -136,7 +136,7 @@ fn create_deck() -> Deck {
 }
 
 fn shuffle_deck(deck: &mut Deck) {
-    thread_rng().shuffle(deck.as_mut_slice());
+    thread_rng().shuffle(&mut deck[..]);
 }
 
 fn score_hand(hand: &Hand) -> i32 {
@@ -243,13 +243,27 @@ fn play_hand(deck: &mut Deck) {
     }
 
     //Return cards to deck
-    for card in dealer_hand.drain() {
-        deck.push(card);
+    //Note: had to remove drain and use a pop loop instead
+    //because drain() is unstable in beta
+    loop {
+        match dealer_hand.pop() {
+            None => break,
+            Some(card) => deck.push(card),
+        }
     }
+    //for card in dealer_hand.drain() {
+    //    deck.push(card);
+    //}
 
-    for card in player_hand.drain() {
-        deck.push(card);
+    loop {
+        match dealer_hand.pop() {
+            None => break,
+            Some(card) => deck.push(card),
+        }
     }
+    //for card in player_hand.drain() {
+    //    deck.push(card);
+    //}
 }
 
 fn main() {
