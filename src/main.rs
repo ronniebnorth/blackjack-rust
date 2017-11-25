@@ -1,5 +1,7 @@
 //#![feature(collections)]
 //#![feature(convert)]
+static AUTOMODE: bool = true;
+
 extern crate rand;
 
 use rand::{thread_rng, Rng};
@@ -7,6 +9,11 @@ use rand::{thread_rng, Rng};
 use std::io;
 use std::option::Option;
 use std::str::FromStr;
+use std::time::SystemTime;
+
+use std::time::Instant;
+
+
 
 #[allow(dead_code)]
 pub enum Value {
@@ -171,7 +178,7 @@ fn print_hands(dealer: &Hand, player: &Hand) {
         print_card(card);
         print!(" ");
     }
-    
+
     print!("\nPlayer:\t");
     for card in player {
         print_card(card);
@@ -180,6 +187,11 @@ fn print_hands(dealer: &Hand, player: &Hand) {
 }
 
 fn deal_card(hand: &mut Hand, deck: &mut Deck) {
+    if deck.len() < 12 {
+        deck.extend(create_deck());
+        //shuffle_deck(&mut deck);
+    }
+
     hand.push(deck.pop().expect("How do you run out of cards in Blackjack?!"));
 }
 
@@ -195,53 +207,67 @@ fn play_hand(deck: &mut Deck) {
     deal_card(&mut player_hand, deck);
 
     // Let player go first
-    loop {
-        print_hands(&dealer_hand, &player_hand);
+    if AUTOMODE {
+        while score_hand(&player_hand) < 17 {
+            deal_card(&mut player_hand, deck);
+            if score_hand(&player_hand) > 21 {
+                break;
+            }
+        }
+    } else {
+        loop {
+            print_hands(&dealer_hand, &player_hand);
 
-        println!("\n[h]it or [s]tand?");
+            println!("\n[h]it or [s]tand?");
 
-        let mut input = String::new();
-        match io::stdin().read_line(&mut input).ok() {
-            Option::Some(_) => match input.trim().as_ref() {
-                "s" | "S" => break,
-                "h" | "H" => {
-                    deal_card(&mut player_hand, deck);
-                    if score_hand(&player_hand) > 21 {
-                        println!("\nBUST!\n");
-                        break;
-                    }
+            let mut input = String::new();
+            match io::stdin().read_line(&mut input).ok() {
+                Option::Some(_) => match input.trim().as_ref() {
+                    "s" | "S" => break,
+                    "h" | "H" => {
+                        deal_card(&mut player_hand, deck);
+                        if score_hand(&player_hand) > 21 {
+                            println!("\nBUST!\n");
+                            break;
+                        }
+                    },
+                    _ => println!("Invalid Value!"),
                 },
-                _ => println!("Invalid Value!"),
-            },
-            Option::None => println!("Invalid Value!"),
+                Option::None => println!("Invalid Value!"),
+            }
         }
     }
 
+
     //Dealer Logic
     while score_hand(&dealer_hand) < 17 {
-        println!("\nDealer hits!");
         deal_card(&mut dealer_hand, deck);
-        print_hands(&dealer_hand, &player_hand);
+        if !AUTOMODE {
+            println!("\nDealer hits!");
+            print_hands(&dealer_hand, &player_hand);
+        }
     }
-    println!("\nDealer stands!");
+    if !AUTOMODE {
+        println!("\nDealer stands!");
 
-    //Final Scoring
-    let dealer_score = score_hand(&dealer_hand);
-    let player_score = score_hand(&player_hand);
-    if dealer_score == 21 && dealer_hand.len() == 2 {
-        println!("\nDEALER WINS with blackjack!");
-    } else if player_score == 21 && player_hand.len() == 2 {
-        println!("\nYOU WIN with blackjack!");
-    } else if player_score > 21 {
-        println!("\nDEALER WINS, you bust!");
-    } else if dealer_score > 21 {
-        println!("\nYOU WIN, dealer busts!");
-    } else if player_score > dealer_score {
-        println!("\nYOU WIN");
-    } else {
-        println!("\nDEALER WINS");
+
+        //Final Scoring
+        let dealer_score = score_hand(&dealer_hand);
+        let player_score = score_hand(&player_hand);
+        if dealer_score == 21 && dealer_hand.len() == 2 {
+            println!("\nDEALER WINS with blackjack!\n\n");
+        } else if player_score == 21 && player_hand.len() == 2 {
+            println!("\nYOU WIN with blackjack!\n\n");
+        } else if player_score > 21 {
+            println!("\nDEALER WINS, you bust!\n\n");
+        } else if dealer_score > 21 {
+            println!("\nYOU WIN, dealer busts!\n\n");
+        } else if player_score > dealer_score {
+            println!("\nYOU WIN\n\n");
+        } else {
+            println!("\nDEALER WINS\n\n");
+        }
     }
-
     //Return cards to deck
     //Note: had to remove drain and use a pop loop instead
     //because drain() is unstable in beta
@@ -267,23 +293,42 @@ fn play_hand(deck: &mut Deck) {
 }
 
 fn main() {
+    let start = Instant::now();
+
     let mut deck = create_deck();
     shuffle_deck(&mut deck);
 
     println!("Welcome to Blackjack!");
 
-    loop {
-        println!("\nWould you like to play a hand (y/n)?");
+    if AUTOMODE {
 
-        let mut input = String::new();
+        let mut num_rounds = 500000;
+        while num_rounds > 0 {
+            play_hand(&mut deck);
+            num_rounds -= 1;
+        }
 
-        match io::stdin().read_line(&mut input).ok() {
-            Option::Some(_) => match input.trim().as_ref() {
-                "y" | "yes" => play_hand(&mut deck),
-                "n" | "no" => break,
-                _ => println!("Please enter 'yes' or 'no'."),
-            },
-            Option::None => break,
+    }else{
+        loop {
+            println!("\nWould you like to play a hand (y/n)?");
+
+            let mut input = String::new();
+
+            match io::stdin().read_line(&mut input).ok() {
+                Option::Some(_) => match input.trim().as_ref() {
+                    "y" | "yes" => play_hand(&mut deck),
+                    "n" | "no" => break,
+                    _ => println!("Please enter 'yes' or 'no'."),
+                },
+                Option::None => break,
+            }
         }
     }
+    
+    let elapsed = start.elapsed();
+        // debug format:
+        println!("{:?}", elapsed);
+        // or format as milliseconds:
+        println!("Elapsed: {} ms",
+                 (elapsed.as_secs() * 1_000) + (elapsed.subsec_nanos() / 1_000_000) as u64);
 }
